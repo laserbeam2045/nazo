@@ -5,7 +5,8 @@ export const assets = {
     'house': './assets/images/house.png',
   },
   sound: {
-    // 'block_break': 'assets/block_break.mp3',  // サウンドファイルのパス
+    'cursor': 'assets/sounds/cursor.mp3',
+    'cursor2': 'assets/sounds/cursor2.mp3',
   },
   spritesheet: {
     'player_ss': {
