@@ -26,10 +26,10 @@ phina.define('Player', {
 
     // タッチ入力の初期化
     this.isTouching = false
+    this.isKeydown = false
     this.touchPosition = Vector2(0, 0)
   },
 
-  // 一文字ずつ表示するロジック
   update: function(app) {
     // デフォルトでは何も押されていない
     this.idle = true;
@@ -40,15 +40,24 @@ phina.define('Player', {
       // タッチが開始された瞬間のみ方向判定を行う
       // if (!this.isTouching) {
         this.determineDirection(); // 方向の判定と移動メソッドの呼び出し
+        if (!this.isTouching) app.currentScene.sounds.footsteps.play()
         this.isTouching = true;
         this.touchPosition.set(pointer.x, pointer.y);
       // }
     } else {
       if (app.currentScene.isPC) {
+        const isKeydown = this.isKeydown
         this.handleKeyboardInput(app)
+
+        if (isKeydown !== this.isKeydown && this.isKeydown) {
+          console.log(123)
+          app.currentScene.sounds.footsteps.play()
+          // this.isKeydown = true
+        }
       }
       this.isTouching = false
       this.touchPosition.set(0, 0)
+      if (!this.isKeydown && !this.isTouching) app.currentScene.sounds.footsteps.stop()
       return
     }
     
@@ -58,21 +67,27 @@ phina.define('Player', {
   // キーボード入力による移動（PC用）
   handleKeyboardInput: function(app) {
     const key = app.keyboard;
+
+    this.isKeydown = false
     if (key.getKey('up')) {
       this.goToUp()
-      this.idle = false;  // 動いているときはidleをfalseに
+      this.idle = false;
+      this.isKeydown = true;
     }
     if (key.getKey('down')) {
       this.goToDown()
       this.idle = false;
+      this.isKeydown = true;
     }
     if (key.getKey('left')) {
       this.goToLeft()
       this.idle = false;
+      this.isKeydown = true;
     }
     if (key.getKey('right')) {
       this.goToRight()
       this.idle = false;
+      this.isKeydown = true;
     }
     if (this.idle) {
       this.stop()

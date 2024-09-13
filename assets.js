@@ -7,6 +7,7 @@ export const assets = {
   sound: {
     'cursor': 'assets/sounds/cursor.mp3',
     'cursor2': 'assets/sounds/cursor2.mp3',
+    'footsteps': 'assets/sounds/footsteps.mp3',
   },
   spritesheet: {
     'player_ss': {
