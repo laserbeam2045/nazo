@@ -68,7 +68,6 @@ phina.define('Dialog', {
         this.currentIndex += 1;
         if (this.label.text[this.label.text.length - 1] === '\n') {
           if (++this.lineBreakCount >= 3) {
-            // console.log('break')
             this.label.y -= this.params.fontSize * 1.2
           }
         }

@@ -9,12 +9,26 @@ phina.define('BaseScene', {
     this.superInit()
 
     this.sounds = {
-      cursor: AssetManager.get('sound', 'cursor'),
-      cursor2: AssetManager.get('sound', 'cursor2'),
-      footsteps: AssetManager.get('sound', 'footsteps'),
+      cursor: {
+        volume: 0.3,
+        loop: false
+      },
+      cursor2: {
+        volume: 0.3,
+        loop: false
+      },
+      footsteps: {
+        volume: 0.3,
+        loop: true
+      }
     }
 
-    this.sounds.footsteps.volume = 2
-    this.sounds.footsteps.loop = true
+    // サウンドの設定を反映
+    Object.keys(this.sounds).forEach(key => {
+      const soundObj = this.sounds[key]
+      this.sounds[key] = AssetManager.get('sound', key)
+      this.sounds[key].volume = soundObj.volume || 1
+      this.sounds[key].loop = soundObj.loop || false
+    })
   },
 })

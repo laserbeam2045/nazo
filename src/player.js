@@ -1,173 +1,146 @@
-import { config } from "../config.js";
-phina.globalize();
+import { config } from "../config.js"
+
+phina.globalize()
 
 phina.define('Player', {
   superClass: 'Sprite',
 
   // コンストラクタ
   init: function(params) {
-    this.superInit('player');
-
-    // // デフォルトパラメータの設定
-    // params = (params || {}).$safe({
-    //   width: 64,
-    //   height: 64,
-    // });
+    this.superInit('player')
 
     this.speed = 5
-
-    this.anim = FrameAnimation(`player_ss`).attachTo(this);
-    this.anim.gotoAndPlay('left')
-    this.direction = 'left'
-    this.idle = true;  // プレイヤーが何もしていない状態
-
-    // // キーボード入力の初期化
-    // this.keyboard = Keyboard();
+    this.anim = FrameAnimation(`player_ss`).attachTo(this)
+    this.setInitialState()
 
     // タッチ入力の初期化
-    this.isTouching = false
-    this.isKeydown = false
-    this.touchPosition = Vector2(0, 0)
+    this.touchState = {
+      isTouching: false,
+      position: Vector2(0, 0)
+    }
+  },
+
+  setInitialState: function() {
+    this.direction = 'stop'
+    this.idle = true
+    this.anim.gotoAndPlay('stop')
   },
 
   update: function(app) {
     // デフォルトでは何も押されていない
-    this.idle = true;
+    this.idle = true
 
     // キャラクターの移動処理
-    const pointer = app.pointer;
+    const pointer = app.pointer
     if (pointer.getPointing()) {
-      // タッチが開始された瞬間のみ方向判定を行う
-      // if (!this.isTouching) {
-        this.determineDirection(); // 方向の判定と移動メソッドの呼び出し
-        if (!this.isTouching) app.currentScene.sounds.footsteps.play()
-        this.isTouching = true;
-        this.touchPosition.set(pointer.x, pointer.y);
-      // }
+      this.handleTouchInput(app, pointer)
+    } else if (app.currentScene.isPC) {
+      this.handleKeyboardInput(app)
     } else {
-      if (app.currentScene.isPC) {
-        const isKeydown = this.isKeydown
-        this.handleKeyboardInput(app)
-
-        if (isKeydown !== this.isKeydown && this.isKeydown) {
-          console.log(123)
-          app.currentScene.sounds.footsteps.play()
-          // this.isKeydown = true
-        }
-      }
-      this.isTouching = false
-      this.touchPosition.set(0, 0)
-      if (!this.isKeydown && !this.isTouching) app.currentScene.sounds.footsteps.stop()
-      return
+      this.resetTouchState()
     }
     
+    this.updateFootstepsSound(app)
+  },
+
+  // タッチ入力、クリック入力による移動
+  handleTouchInput: function(app, pointer) {
+    if (!this.touchState.isTouching) {
+      app.currentScene.sounds.footsteps.play()
+    }
+    this.touchState.isTouching = true
+    this.touchState.position.set(pointer.x, pointer.y)
+    this.determineDirection(pointer)
     this.moveTowardsTouchPosition()
   },
 
   // キーボード入力による移動（PC用）
   handleKeyboardInput: function(app) {
-    const key = app.keyboard;
+    if (!this.touchState.isTouching) {
+      app.currentScene.sounds.footsteps.play()
+    }
 
-    this.isKeydown = false
-    if (key.getKey('up')) {
-      this.goToUp()
-      this.idle = false;
-      this.isKeydown = true;
+    if (app.keyboard.getKey('up')) {
+      this.move('up')
+      this.touchState.isTouching = true
     }
-    if (key.getKey('down')) {
-      this.goToDown()
-      this.idle = false;
-      this.isKeydown = true;
+    if (app.keyboard.getKey('down')) {
+      this.move('down')
+      this.touchState.isTouching = true
     }
-    if (key.getKey('left')) {
-      this.goToLeft()
-      this.idle = false;
-      this.isKeydown = true;
+    if (app.keyboard.getKey('left')) {
+      this.move('left')
+      this.touchState.isTouching = true
     }
-    if (key.getKey('right')) {
-      this.goToRight()
-      this.idle = false;
-      this.isKeydown = true;
+    if (app.keyboard.getKey('right')) {
+      this.move('right')
+      this.touchState.isTouching = true
     }
     if (this.idle) {
       this.stop()
+      this.touchState.isTouching = false
+    }
+  },
+
+  updateFootstepsSound: function(app) {
+    const isMoving = this.touchState.isTouching
+    if (!isMoving) {
+      app.currentScene.sounds.footsteps.stop()
     }
   },
 
   // タッチ位置に向かってスムーズに移動
   moveTowardsTouchPosition: function() {
-    const dx = this.touchPosition.x - this.x;
-    const dy = this.touchPosition.y - this.y;
+    const dx = this.touchState.position.x - this.x
+    const dy = this.touchState.position.y - this.y
 
     // 距離に応じた速度調整
-    var distance = Math.sqrt(dx * dx + dy * dy);
-    var moveSpeed = Math.min(this.speed, distance);  // プレイヤーの速度は距離に依存
+    var distance = Math.sqrt(dx * dx + dy * dy)
+    var moveSpeed = Math.min(this.speed, distance)
 
     // プレイヤーをタッチ位置に向かって移動
     if (distance > 0) {
-      this.x += (dx / distance) * moveSpeed;
-      this.y += (dy / distance) * moveSpeed;
+      this.x += (dx / distance) * moveSpeed
+      this.y += (dy / distance) * moveSpeed
     }
 
     // プレイヤーが近づいたときのスナップ
     if (distance < this.speed) {
-      this.x = this.touchPosition.x;
-      this.y = this.touchPosition.y;
+      this.x = this.touchState.position.x
+      this.y = this.touchState.position.y
     }
   },
   
-  determineDirection: function() {
-    const dx = this.touchPosition.x - this.x;
-    const dy = this.touchPosition.y - this.y;
+  determineDirection: function(pointer) {
+    const dx = pointer.x - this.x
+    const dy = pointer.y - this.y
 
     // 上下左右の方向判定
     if (Math.abs(dx) > Math.abs(dy)) {
-      // 左右の移動が大きい場合
-      if (dx > 0) {
-        // this.movingDirection = 'right';
-        this.goToRight(0);
-      } else {
-        // this.movingDirection = 'left';
-        this.goToLeft(0);
-      }
+      this.move(dx > 0 ? 'right' : 'left', 0)
     } else {
-      // 上下の移動が大きい場合
-      if (dy > 0) {
-        // this.movingDirection = 'down';
-        this.goToDown(0);
-      } else {
-        // this.movingDirection = 'up';
-        this.goToUp(0);
-      }
+      this.move(dy > 0 ? 'down' : 'up', 0)
+    }
+  },
+
+  move: function(direction, speed = this.speed) {
+    if (this.direction !== direction) {
+      this.anim.gotoAndPlay(direction)
+    }
+    this.direction = direction
+    this.idle = false
+
+    switch (direction) {
+      case 'up': this.y -= speed; break;
+      case 'down': this.y += speed; break;
+      case 'left': this.x -= speed; break;
+      case 'right': this.x += speed; break;
     }
   },
 
   stop: function() {
     this.anim.gotoAndPlay('stop')
     this.direction = 'stop'
+    this.idle = true
   },
-
-  goToUp: function(speed = this.speed) {
-    if (this.direction !== 'up') this.anim.gotoAndPlay('up')
-    this.direction = 'up'
-    this.y -= speed
-  },
-
-  goToDown: function(speed = this.speed) {
-    if (this.direction !== 'down') this.anim.gotoAndPlay('down')
-    this.direction = 'down'
-    this.y += speed
-  },
-
-  goToLeft: function(speed = this.speed) {
-    if (this.direction !== 'left') this.anim.gotoAndPlay('left')
-    this.direction = 'left'
-    this.x -= speed
-  },
-
-  goToRight: function(speed = this.speed) {
-    if (this.direction !== 'right') this.anim.gotoAndPlay('right')
-    this.direction = 'right'
-    this.x += speed
-  },
-});
+})

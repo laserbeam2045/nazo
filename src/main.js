@@ -7,7 +7,7 @@ phina.define('MainScene', {
   superClass: 'BaseScene',
 
   init: function() {
-    this.superInit();
+    this.superInit()
 
     this.isClear = false
 
@@ -42,11 +42,10 @@ phina.define('MainScene', {
       }, 2000)
     }
   },
-});
+})
 
 phina.main(function() {
   var app = GameApp({
-    // title: 'おバカ謎解きアドベンチャー',
     startLabel: 'title',
     width: config.screen.width,
     height: config.screen.height,
@@ -63,4 +62,4 @@ phina.main(function() {
   });
 
   app.run();
-});
+})
