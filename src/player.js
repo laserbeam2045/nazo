@@ -43,6 +43,11 @@ phina.define('Player', {
     this.updateFootstepsSound(app)
   },
 
+  resetTouchState: function() {
+    this.touchState.isTouching = false
+    this.touchState.position.set(0, 0)
+  },
+
   // タッチ入力、クリック入力による移動
   handleTouchInput: function(app, pointer) {
     if (!this.touchState.isTouching) {
